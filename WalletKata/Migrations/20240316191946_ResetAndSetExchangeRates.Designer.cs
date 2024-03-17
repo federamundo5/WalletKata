@@ -9,7 +9,7 @@ using WalletKata.Repositories;
 
 namespace WalletKata.Migrations
 {
-    [DbContext(typeof(KataContext))]
+    [DbContext(typeof(KataDbContext))]
     [Migration("20240316191946_ResetAndSetExchangeRates")]
     partial class ResetAndSetExchangeRates
     {

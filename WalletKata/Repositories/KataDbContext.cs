@@ -3,9 +3,9 @@ using WalletKata.Models;
 
 namespace WalletKata.Repositories
 {
-    public class KataContext : DbContext
+    public class KataDbContext : DbContext
     {
-        public KataContext(DbContextOptions<KataContext> options) : base(options) { }
+        public KataDbContext(DbContextOptions<KataDbContext> options) : base(options) { }
 
         public DbSet<User> Users { get; set; }
         public DbSet<Wallet> Wallets { get; set; }

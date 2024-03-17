@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using WalletKata.Models;
 using WalletKata.Repositories;
 using WalletKata.Repositories.Interfaces;
@@ -13,9 +15,17 @@ namespace WalletKata.Services
         private readonly IRepository<Currency> _currencyRepository;
         private readonly IRepository<ExchangeRate> _exchangeRateRepository;
         private readonly IRepository<User> _userRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public WalletService(IRepository<User> userRepository, IRepository<Wallet> walletRepository, IRepository<CurrencyWallet> currencyWalletRepository, IRepository<Currency> currencyRepository, IRepository<ExchangeRate> exchangeRateRepository)
+        public WalletService(
+            IUnitOfWork unitOfWork,
+            IRepository<User> userRepository,
+            IRepository<Wallet> walletRepository,
+            IRepository<CurrencyWallet> currencyWalletRepository,
+            IRepository<Currency> currencyRepository,
+            IRepository<ExchangeRate> exchangeRateRepository)
         {
+            _unitOfWork = unitOfWork;
             _walletRepository = walletRepository;
             _userRepository = userRepository;
             _currencyWalletRepository = currencyWalletRepository;
@@ -25,180 +35,182 @@ namespace WalletKata.Services
 
         public async Task Deposit(int userId, string currencyCode, int amount)
         {
-            // Validar si el usuario existe
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
-            {
-                throw new ArgumentException($"User not valid.");
-            }
+            _unitOfWork.BeginTransaction();
 
-            // Obtener la billetera del usuario
-            var wallet = (await _walletRepository.GetAllAsync()).FirstOrDefault(w => w.UserId == userId);
-            if (wallet == null)
+            try
             {
-                // Si la billetera no existe, crear una nueva
-                wallet = new Wallet { UserId = userId };
-                await _walletRepository.AddAsync(wallet);
-            }
+                //valido user
+                await WalletValidator.ValidateUserAsync(_userRepository, userId);
 
-            // Obtener la moneda
-            var currency = (await _currencyRepository.GetAllAsync()).FirstOrDefault(c => c.Code == currencyCode);
-            if (currency == null)
-            {
-                throw new ArgumentException($"Invalid currency code.");
-            }
-
-            // Obtener la billetera de la moneda
-            var currencyWallet = (await _currencyWalletRepository.GetAllAsync()).FirstOrDefault(cw => cw.WalletId == wallet.WalletId && cw.CurrencyId == currency.CurrencyId);
-            if (currencyWallet == null)
-            {
-                // Si la billetera de la moneda no existe, crear una nueva
-                currencyWallet = new CurrencyWallet
+                //obtengo wallet de user, si no existe, la genero para facilitar las pruebas.
+                var wallet = (await _walletRepository.GetByCustomFilterAsync(w => w.UserId == userId)).FirstOrDefault();
+                if (wallet == null)
                 {
-                    WalletId = wallet.WalletId,
-                    CurrencyId = currency.CurrencyId,
-                    Amount = amount
-                };
-                await _currencyWalletRepository.AddAsync(currencyWallet);
+                    wallet = await this.CreateWalletAsync(userId);
+                }
+
+                //valido que la currency depositada sea valida
+                var currencyId = await WalletValidator.ValidateCurrencyAsync(_currencyRepository, currencyCode);
+
+                //chequeo si el user ya tiene esta currency en su wallet.  
+                var currencyWallet = (await _currencyWalletRepository.GetByCustomFilterAsync(cw => cw.WalletId == wallet.WalletId && cw.CurrencyId == currencyId)).FirstOrDefault();
+
+                //Si no tiene esta currency, genero una nueva currency Wallet
+                if (currencyWallet == null)
+                {
+                    currencyWallet = new CurrencyWallet
+                    {
+                        WalletId = wallet.WalletId,
+                        CurrencyId = currencyId,
+                        Amount = amount
+                    };
+                    await _currencyWalletRepository.AddAsync(currencyWallet);
+                }
+                else
+                {
+                    //Si  tiene esta currency, sumo el amount depositado
+                    currencyWallet.Amount += amount;
+                    await _currencyWalletRepository.UpdateAsync(currencyWallet);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                currencyWallet.Amount += amount;
-                await _currencyWalletRepository.UpdateAsync(currencyWallet);
+                //realizo rollback en caso de error
+                _unitOfWork.Rollback();
+                throw;
             }
+        }
+
+        public async Task<Wallet> CreateWalletAsync(int userId)
+        {
+            var newWallet = new Wallet { UserId = userId };
+            await _walletRepository.AddAsync(newWallet);
+            return newWallet;
         }
 
         public async Task Withdraw(int userId, string currencyCode, int amount)
         {
-            // Validar si el usuario existe
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
-            {
-                throw new ArgumentException($"User not valid.");
-            }
+            _unitOfWork.BeginTransaction();
 
-            // Obtener la billetera del usuario
-            var wallet = (await _walletRepository.GetAllAsync()).FirstOrDefault(w => w.UserId == userId);
-            if (wallet == null)
+            try
             {
-                throw new InvalidOperationException($"User has no valid wallet.");
-            }
+                //valido los datos enviados
+                await WalletValidator.ValidateUserAsync(_userRepository, userId);
+                var walletId = await WalletValidator.ValidateWalletAsync(_walletRepository, userId);
+                var currencyId = await WalletValidator.ValidateCurrencyAsync(_currencyRepository, currencyCode);
 
-            // Obtener la moneda
-            var currency = (await _currencyRepository.GetAllAsync()).FirstOrDefault(c => c.Code == currencyCode);
-            if (currency == null)
-            {
-                throw new ArgumentException($"Invalid currency code.");
-            }
+                //obtengo los datos de esta currency en su wallet
+                var currencyWallet = (await _currencyWalletRepository.GetByCustomFilterAsync(cw => cw.WalletId == walletId && cw.CurrencyId == currencyId)).FirstOrDefault();
 
-            // Obtener la billetera de la moneda
-            var currencyWallet = (await _currencyWalletRepository.GetAllAsync()).FirstOrDefault(cw => cw.WalletId == wallet.WalletId && cw.CurrencyId == currency.CurrencyId);
-            if (currencyWallet == null || currencyWallet.Amount < amount)
-            {
-                throw new InvalidOperationException($"Insufficient balance in '{currencyCode}'.");
-            }
+                //si no tenia esta currency o quiere realizar un withdraw mayor a el monto permitido, arrojo error
+                if (currencyWallet == null || currencyWallet.Amount < amount)
+                {
+                    throw new InvalidOperationException("Insufficient balance");
+                }
 
-            // Actualizar el saldo de la billetera de la moneda
-            currencyWallet.Amount -= amount;
-            await _currencyWalletRepository.UpdateAsync(currencyWallet);
+                //resto el monto retirado y actualizo la DB.
+                currencyWallet.Amount -= amount;
+                await _currencyWalletRepository.UpdateAsync(currencyWallet);
+            }
+            catch (Exception ex)
+            {               
+                //realizo rollback en caso de error
+                _unitOfWork.Rollback();
+                throw;
+            }
         }
 
         public async Task<Dictionary<string, int>> GetBalance(long userId)
         {
-            // Validar si el usuario existe
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
+            _unitOfWork.BeginTransaction();
+
+            try
             {
-                throw new ArgumentException($"User not valid.");
-            }
+                //valido que el usuario exista y tenga una wallet.
+                await WalletValidator.ValidateUserAsync(_userRepository, userId);
+                var walletId = await WalletValidator.ValidateWalletAsync(_walletRepository, userId);
 
-            // Obtener la billetera del usuario
-            var wallet = (await _walletRepository.GetAllAsync()).FirstOrDefault(w => w.UserId == userId);
-            if (wallet == null)
+                //obtengo todas las currency de la wallet para realizar la suma
+                var currencyWallets = await _currencyWalletRepository.GetByCustomFilterAsync(cw => cw.WalletId == walletId);
+
+                //genero un diccionario con todas sus currency y sus amount.
+                var balanceDictionary = currencyWallets
+                    .Join(
+                        await _currencyRepository.GetAllAsync(),
+                        cw => cw.CurrencyId,
+                        c => c.CurrencyId,
+                        (cw, c) => new { CurrencyCode = c.Code, Amount = cw.Amount }
+                    )
+                    .ToDictionary(item => item.CurrencyCode, item => item.Amount);
+
+                return balanceDictionary;
+            }
+            catch (Exception ex)
             {
-                throw new InvalidOperationException($"User has no valid wallet.");
+                //realizo rollback  en caso de error
+                _unitOfWork.Rollback();
+                throw;
             }
-
-            // Obtener los saldos de las distintas monedas en la billetera
-            var currencyWallets = await _currencyWalletRepository.GetAllAsync();
-            var balanceDictionary = currencyWallets
-                .Where(cw => cw.WalletId == wallet.WalletId)
-                .Join(
-                    await _currencyRepository.GetAllAsync(),
-                    cw => cw.CurrencyId,
-                    c => c.CurrencyId,
-                    (cw, c) => new { CurrencyCode = c.Code, Amount = cw.Amount }
-                )
-                .ToDictionary(item => item.CurrencyCode, item => item.Amount);
-
-            return balanceDictionary;
         }
 
         public async Task Exchange(int userId, string sourceCurrencyCode, string targetCurrencyCode, int amount)
         {
-            // Validar si el usuario existe
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
+            _unitOfWork.BeginTransaction();
+
+            try
             {
-                throw new ArgumentException($"User not valid.");
-            }
+                //valido que la wallet y las currencies existan
+                var walletId = await WalletValidator.ValidateWalletAsync(_walletRepository, userId);
+                var sourceCurrencyId = await WalletValidator.ValidateCurrencyAsync(_currencyRepository, sourceCurrencyCode);
+                var targetCurrencyId = await WalletValidator.ValidateCurrencyAsync(_currencyRepository, targetCurrencyCode);
 
-            // Obtener la billetera del usuario
-            var wallet = (await _walletRepository.GetAllAsync()).FirstOrDefault(w => w.UserId == userId);
-            if (wallet == null)
-            {
-                throw new InvalidOperationException($"User has no valid wallet.");
-            }
-
-            // Obtener las entidades Currency correspondientes a las monedas de origen y destino
-            var sourceCurrency = (await _currencyRepository.GetAllAsync()).FirstOrDefault(c => c.Code == sourceCurrencyCode);
-            var targetCurrency = (await _currencyRepository.GetAllAsync()).FirstOrDefault(c => c.Code == targetCurrencyCode);
-            if (sourceCurrency == null || targetCurrency == null)
-            {
-                throw new ArgumentException($"Invalid currency code.");
-            }
-
-            // Obtener la billetera de la moneda de origen
-            var sourceCurrencyWallet = (await _currencyWalletRepository.GetAllAsync()).FirstOrDefault(cw => cw.WalletId == wallet.WalletId && cw.CurrencyId == sourceCurrency.CurrencyId);
-            if (sourceCurrencyWallet == null || sourceCurrencyWallet.Amount < amount)
-            {
-                throw new InvalidOperationException($"Insufficient balance in '{sourceCurrencyCode}'.");
-            }
-
-            // Obtener el tipo de cambio entre las monedas de origen y destino
-            var exchangeRate = (await _exchangeRateRepository.GetAllAsync()).FirstOrDefault(er => er.SourceCurrencyCode == sourceCurrencyCode && er.TargetCurrencyCode == targetCurrencyCode);
-            if (exchangeRate == null)
-            {
-                throw new InvalidOperationException($"Exchange rate not found for converting from '{sourceCurrencyCode}' to '{targetCurrencyCode}'.");
-            }
-
-            // Calcular el monto en la moneda de destino
-            var targetAmount = amount * exchangeRate.Rate;
-
-            // Actualizar los saldos de las billeteras de las monedas de origen y destino
-            sourceCurrencyWallet.Amount -= amount;
-            await _currencyWalletRepository.UpdateAsync(sourceCurrencyWallet);
-
-            var targetCurrencyWallet = (await _currencyWalletRepository.GetAllAsync()).FirstOrDefault(cw => cw.WalletId == wallet.WalletId && cw.CurrencyId == targetCurrency.CurrencyId);
-            if (targetCurrencyWallet == null)
-            {
-                targetCurrencyWallet = new CurrencyWallet
+                //valido que el usuario tenga la moneda a convertir en su wallet y que tenga suficiente monto
+                var sourceCurrencyWallet = (await _currencyWalletRepository.GetByCustomFilterAsync(cw => cw.WalletId == walletId && cw.CurrencyId == sourceCurrencyId)).FirstOrDefault();
+              
+                if (sourceCurrencyWallet == null || sourceCurrencyWallet.Amount < amount)
                 {
-                    WalletId = sourceCurrencyWallet.WalletId,
-                    CurrencyId = targetCurrency.CurrencyId,
-                    Amount = (int)targetAmount
-                };
-                await _currencyWalletRepository.AddAsync(targetCurrencyWallet);
+                    throw new InvalidOperationException("Insufficient balance.");
+                }
+
+                //valido que exista el exchange rate entre las monedas
+                var exchangeRate = (await _exchangeRateRepository.GetByCustomFilterAsync(er => er.SourceCurrencyCode == sourceCurrencyCode && er.TargetCurrencyCode == targetCurrencyCode)).FirstOrDefault();
+
+                if (exchangeRate == null)
+                {
+                    throw new InvalidOperationException($"Exchange rate not found for '{sourceCurrencyCode}' to '{targetCurrencyCode}'.");
+                }
+
+                //calculo el monto a convertir y realizo las modificaciones
+                var targetAmount = amount * exchangeRate.Rate;
+
+                sourceCurrencyWallet.Amount -= amount;
+                await _currencyWalletRepository.UpdateAsync(sourceCurrencyWallet);
+
+                //consulto si el usuario tiene la moneda destino en su wallet, si no la tiene genero el registro. si la tiene sumo el monto al monto existente.
+                var targetCurrencyWallet = (await _currencyWalletRepository.GetByCustomFilterAsync(cw => cw.WalletId == walletId && cw.CurrencyId == targetCurrencyId)).FirstOrDefault();
+
+                if (targetCurrencyWallet == null)
+                {
+                    targetCurrencyWallet = new CurrencyWallet
+                    {
+                        WalletId = walletId,
+                        CurrencyId = targetCurrencyId,
+                        Amount = (int)targetAmount
+                    };
+                    await _currencyWalletRepository.AddAsync(targetCurrencyWallet);
+                }
+                else
+                {
+                    targetCurrencyWallet.Amount += (int)targetAmount;
+                    await _currencyWalletRepository.UpdateAsync(targetCurrencyWallet);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                targetCurrencyWallet.Amount += (int)targetAmount;
-                await _currencyWalletRepository.UpdateAsync(targetCurrencyWallet);
+                //realizo rollback  en caso de error
+                _unitOfWork.Rollback();
+                throw;
             }
         }
-
-
-
-
     }
 }

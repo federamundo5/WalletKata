@@ -8,7 +8,7 @@ using WalletKata.Repositories;
 
 namespace WalletKata.Migrations
 {
-    [DbContext(typeof(KataContext))]
+    [DbContext(typeof(KataDbContext))]
     partial class KataContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

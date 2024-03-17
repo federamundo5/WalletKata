@@ -6,6 +6,9 @@ using WalletKata.Services.Interfaces;
 
 namespace WalletKata.Controllers
 {
+
+    [Route("api/[controller]")]
+    [ApiController]
     public class WalletController : ControllerBase
     {
 
@@ -16,6 +19,12 @@ namespace WalletKata.Controllers
             _walletService = walletService;
         }
 
+
+
+        /// <summary>
+        /// Deposit money into the user's wallet.
+        /// </summary>
+        /// <param name="request">Deposit request containing user ID, currency code, and amount.</param>
         [HttpPost("deposit")]
         public async Task<IActionResult> Deposit(DepositRequest request)
         {
