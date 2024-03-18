@@ -30,6 +30,7 @@ namespace WalletKata
                 options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ICurrencyService, CurrencyService>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddSwaggerGen(c =>

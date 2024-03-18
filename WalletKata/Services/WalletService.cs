@@ -127,7 +127,6 @@ namespace WalletKata.Services
         public async Task<Dictionary<string, int>> GetBalance(long userId)
         {
 
-            _unitOfWork.BeginTransaction();
 
             //valido que el usuario exista y tenga una wallet.
             await WalletValidator.ValidateUserAsync(_userRepository, userId);

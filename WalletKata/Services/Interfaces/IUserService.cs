@@ -6,5 +6,7 @@ namespace WalletKata.Services.Interfaces
     public interface IUserService
     {
         Task<long> CreateUser(string username);
+        Task<IEnumerable<User>> GetAllUsers();
+
     }
 }

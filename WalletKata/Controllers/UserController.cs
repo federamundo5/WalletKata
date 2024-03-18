@@ -39,5 +39,19 @@ namespace WalletKata.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
+        {
+            try
+            {
+                var users = await _userService.GetAllUsers();
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
     }
 }

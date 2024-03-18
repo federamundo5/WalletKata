@@ -36,5 +36,18 @@ namespace WalletKata.Services
             var newUser = await _userRepository.AddAsync(user);
             return newUser.UserId;
         }
+
+        public async Task<IEnumerable<User>> GetAllUsers()
+        {
+            try
+            {
+                return await _userRepository.GetAllAsync();
+            }
+            catch (Exception ex)
+            {
+                // Handle exception or log it
+                throw new Exception("Error occurred while retrieving users.", ex);
+            }
+        }
     }
 }

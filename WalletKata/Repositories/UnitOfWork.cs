@@ -30,7 +30,9 @@ namespace WalletKata.Repositories
 
         public void Dispose()
         {
+            if(_transaction != null)
             _transaction.Dispose();
+            
         }
     }
 }
