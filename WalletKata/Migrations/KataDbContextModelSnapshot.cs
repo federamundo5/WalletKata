@@ -9,7 +9,7 @@ using WalletKata.Repositories;
 namespace WalletKata.Migrations
 {
     [DbContext(typeof(KataDbContext))]
-    partial class KataContextModelSnapshot : ModelSnapshot
+    partial class KataDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
@@ -45,6 +45,16 @@ namespace WalletKata.Migrations
                         {
                             CurrencyId = 3L,
                             Code = "USD"
+                        },
+                        new
+                        {
+                            CurrencyId = 4L,
+                            Code = "BRL"
+                        },
+                        new
+                        {
+                            CurrencyId = 5L,
+                            Code = "COP"
                         });
                 });
 
@@ -54,7 +64,7 @@ namespace WalletKata.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Amount")
+                    b.Property<long>("Amount")
                         .HasColumnType("INTEGER");
 
                     b.Property<long>("CurrencyId")
@@ -107,30 +117,128 @@ namespace WalletKata.Migrations
                         new
                         {
                             ExchangeRateId = 3L,
-                            Rate = 1.05m,
-                            SourceCurrencyCode = "EUR",
-                            TargetCurrencyCode = "USD"
+                            Rate = 0.20m,
+                            SourceCurrencyCode = "ARS",
+                            TargetCurrencyCode = "BRL"
                         },
                         new
                         {
                             ExchangeRateId = 4L,
+                            Rate = 0.00027m,
+                            SourceCurrencyCode = "ARS",
+                            TargetCurrencyCode = "COP"
+                        },
+                        new
+                        {
+                            ExchangeRateId = 5L,
                             Rate = 1200m,
                             SourceCurrencyCode = "EUR",
                             TargetCurrencyCode = "ARS"
                         },
                         new
                         {
-                            ExchangeRateId = 5L,
+                            ExchangeRateId = 6L,
+                            Rate = 1.05m,
+                            SourceCurrencyCode = "EUR",
+                            TargetCurrencyCode = "USD"
+                        },
+                        new
+                        {
+                            ExchangeRateId = 7L,
+                            Rate = 5.0m,
+                            SourceCurrencyCode = "EUR",
+                            TargetCurrencyCode = "BRL"
+                        },
+                        new
+                        {
+                            ExchangeRateId = 8L,
+                            Rate = 4000m,
+                            SourceCurrencyCode = "EUR",
+                            TargetCurrencyCode = "COP"
+                        },
+                        new
+                        {
+                            ExchangeRateId = 9L,
                             Rate = 1150m,
                             SourceCurrencyCode = "USD",
                             TargetCurrencyCode = "ARS"
                         },
                         new
                         {
-                            ExchangeRateId = 6L,
+                            ExchangeRateId = 10L,
                             Rate = 0.952m,
                             SourceCurrencyCode = "USD",
                             TargetCurrencyCode = "EUR"
+                        },
+                        new
+                        {
+                            ExchangeRateId = 11L,
+                            Rate = 5.0m,
+                            SourceCurrencyCode = "USD",
+                            TargetCurrencyCode = "BRL"
+                        },
+                        new
+                        {
+                            ExchangeRateId = 12L,
+                            Rate = 3400m,
+                            SourceCurrencyCode = "USD",
+                            TargetCurrencyCode = "COP"
+                        },
+                        new
+                        {
+                            ExchangeRateId = 13L,
+                            Rate = 5.0m,
+                            SourceCurrencyCode = "BRL",
+                            TargetCurrencyCode = "ARS"
+                        },
+                        new
+                        {
+                            ExchangeRateId = 14L,
+                            Rate = 0.20m,
+                            SourceCurrencyCode = "BRL",
+                            TargetCurrencyCode = "EUR"
+                        },
+                        new
+                        {
+                            ExchangeRateId = 15L,
+                            Rate = 0.2m,
+                            SourceCurrencyCode = "BRL",
+                            TargetCurrencyCode = "USD"
+                        },
+                        new
+                        {
+                            ExchangeRateId = 16L,
+                            Rate = 10000m,
+                            SourceCurrencyCode = "BRL",
+                            TargetCurrencyCode = "COP"
+                        },
+                        new
+                        {
+                            ExchangeRateId = 17L,
+                            Rate = 4.0m,
+                            SourceCurrencyCode = "COP",
+                            TargetCurrencyCode = "ARS"
+                        },
+                        new
+                        {
+                            ExchangeRateId = 18L,
+                            Rate = 0.00025m,
+                            SourceCurrencyCode = "COP",
+                            TargetCurrencyCode = "EUR"
+                        },
+                        new
+                        {
+                            ExchangeRateId = 19L,
+                            Rate = 0.00029m,
+                            SourceCurrencyCode = "COP",
+                            TargetCurrencyCode = "USD"
+                        },
+                        new
+                        {
+                            ExchangeRateId = 20L,
+                            Rate = 0.0001m,
+                            SourceCurrencyCode = "COP",
+                            TargetCurrencyCode = "BRL"
                         });
                 });
 

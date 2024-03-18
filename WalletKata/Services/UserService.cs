@@ -34,7 +34,9 @@ namespace WalletKata.Services
             // Create new user
             var user = new User { Name = username };
             var newUser = await _userRepository.AddAsync(user);
+            _unitOfWork.Commit();
             return newUser.UserId;
+
         }
 
         public async Task<IEnumerable<User>> GetAllUsers()

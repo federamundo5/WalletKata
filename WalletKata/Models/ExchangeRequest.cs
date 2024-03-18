@@ -15,8 +15,7 @@ namespace WalletKata.Models
         public string TargetCurrencyCode { get; set; }
 
         [Required(ErrorMessage = "Amount is required")]
-        [Range(1, int.MaxValue, ErrorMessage = "Amount must be greater than zero")]
-        public int Amount { get; set; }
+        public decimal Amount { get; set; }
     }
 
 }

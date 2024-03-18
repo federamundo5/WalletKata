@@ -5,6 +5,6 @@
         public long CurrencyWalletId { get; set; }
         public long WalletId { get; set; }
         public long CurrencyId { get; set; }
-        public int Amount { get; set; }
+        public decimal Amount { get; set; }
     }
 }

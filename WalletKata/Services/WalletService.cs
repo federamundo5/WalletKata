@@ -33,7 +33,7 @@ namespace WalletKata.Services
             _exchangeRateRepository = exchangeRateRepository;
         }
 
-        public async Task Deposit(int userId, string currencyCode, int amount)
+        public async Task Deposit(int userId, string currencyCode, decimal amount)
         {
             _unitOfWork.BeginTransaction();
 
@@ -91,7 +91,7 @@ namespace WalletKata.Services
             return newWallet;
         }
 
-        public async Task Withdraw(int userId, string currencyCode, int amount)
+        public async Task Withdraw(int userId, string currencyCode, decimal amount)
         {
             _unitOfWork.BeginTransaction();
 
@@ -124,7 +124,7 @@ namespace WalletKata.Services
             }
         }
 
-        public async Task<Dictionary<string, int>> GetBalance(long userId)
+        public async Task<Dictionary<string, decimal>> GetBalance(long userId)
         {
 
 
@@ -148,7 +148,7 @@ namespace WalletKata.Services
                 return balanceDictionary;                
         }
 
-        public async Task Exchange(int userId, string sourceCurrencyCode, string targetCurrencyCode, int amount)
+        public async Task Exchange(int userId, string sourceCurrencyCode, string targetCurrencyCode, decimal amount)
         {
             _unitOfWork.BeginTransaction();
 
@@ -177,6 +177,7 @@ namespace WalletKata.Services
 
                 //calculo el monto a convertir y realizo las modificaciones
                 var targetAmount = amount * exchangeRate.Rate;
+   
 
                 sourceCurrencyWallet.Amount -= amount;
                 await _currencyWalletRepository.UpdateAsync(sourceCurrencyWallet);
@@ -190,14 +191,14 @@ namespace WalletKata.Services
                     {
                         WalletId = walletId,
                         CurrencyId = targetCurrencyId,
-                        Amount = (int)targetAmount
+                        Amount = targetAmount
                     };
                     await _currencyWalletRepository.AddAsync(targetCurrencyWallet);
                 }
                 else
                 {
                     //Si el usuario contiene la moneda en su wallet, le sumo el amount correspondiente
-                    targetCurrencyWallet.Amount += (int)targetAmount;
+                    targetCurrencyWallet.Amount += targetAmount;
                     await _currencyWalletRepository.UpdateAsync(targetCurrencyWallet);
                 }
 

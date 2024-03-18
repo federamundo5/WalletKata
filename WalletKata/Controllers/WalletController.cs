@@ -49,7 +49,7 @@ namespace WalletKata.Controllers
         }
 
         [HttpPost("withdraw")]
-        public async Task<IActionResult> Withdraw(WithdrawalRequest withdrawalRequest)
+        public async Task<IActionResult> Withdraw([FromBody]WithdrawalRequest withdrawalRequest)
         {
             if (!ModelState.IsValid)
             {
@@ -105,8 +105,8 @@ namespace WalletKata.Controllers
             try
             {
                 var balance = await _walletService.GetBalance(userId);
-                var balanceList = balance.Where(c => c.Value != 0)
-                                         .Select(currencies => new { CurrencyCode = currencies.Key, Amount = currencies.Value })
+                var balanceList = balance.Where(c => Math.Abs(c.Value) > 0.0001m)
+                            .Select(currencies => new { CurrencyCode = currencies.Key, Amount = currencies.Value })
                                          .ToList();
                 return Ok(balanceList);
             }

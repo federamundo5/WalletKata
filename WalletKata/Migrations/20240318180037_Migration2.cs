@@ -4,7 +4,7 @@
 
 namespace WalletKata.Migrations
 {
-    public partial class ResetAndSetExchangeRates : Migration
+    public partial class Migration2 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -29,7 +29,7 @@ namespace WalletKata.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     WalletId = table.Column<long>(type: "INTEGER", nullable: false),
                     CurrencyId = table.Column<long>(type: "INTEGER", nullable: false),
-                    Amount = table.Column<int>(type: "INTEGER", nullable: false)
+                    Amount = table.Column<long>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -93,6 +93,16 @@ namespace WalletKata.Migrations
                 values: new object[] { 3L, "USD" });
 
             migrationBuilder.InsertData(
+                table: "Currency",
+                columns: new[] { "CurrencyId", "Code" },
+                values: new object[] { 4L, "BRL" });
+
+            migrationBuilder.InsertData(
+                table: "Currency",
+                columns: new[] { "CurrencyId", "Code" },
+                values: new object[] { 5L, "COP" });
+
+            migrationBuilder.InsertData(
                 table: "ExchangeRate",
                 columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
                 values: new object[] { 1L, 0.000833m, "ARS", "EUR" });
@@ -105,22 +115,92 @@ namespace WalletKata.Migrations
             migrationBuilder.InsertData(
                 table: "ExchangeRate",
                 columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
-                values: new object[] { 3L, 1.05m, "EUR", "USD" });
+                values: new object[] { 3L, 0.20m, "ARS", "BRL" });
 
             migrationBuilder.InsertData(
                 table: "ExchangeRate",
                 columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
-                values: new object[] { 4L, 1200m, "EUR", "ARS" });
+                values: new object[] { 4L, 0.00027m, "ARS", "COP" });
 
             migrationBuilder.InsertData(
                 table: "ExchangeRate",
                 columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
-                values: new object[] { 5L, 1150m, "USD", "ARS" });
+                values: new object[] { 5L, 1200m, "EUR", "ARS" });
 
             migrationBuilder.InsertData(
                 table: "ExchangeRate",
                 columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
-                values: new object[] { 6L, 0.952m, "USD", "EUR" });
+                values: new object[] { 6L, 1.05m, "EUR", "USD" });
+
+            migrationBuilder.InsertData(
+                table: "ExchangeRate",
+                columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
+                values: new object[] { 7L, 5.0m, "EUR", "BRL" });
+
+            migrationBuilder.InsertData(
+                table: "ExchangeRate",
+                columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
+                values: new object[] { 8L, 4000m, "EUR", "COP" });
+
+            migrationBuilder.InsertData(
+                table: "ExchangeRate",
+                columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
+                values: new object[] { 9L, 1150m, "USD", "ARS" });
+
+            migrationBuilder.InsertData(
+                table: "ExchangeRate",
+                columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
+                values: new object[] { 10L, 0.952m, "USD", "EUR" });
+
+            migrationBuilder.InsertData(
+                table: "ExchangeRate",
+                columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
+                values: new object[] { 11L, 5.0m, "USD", "BRL" });
+
+            migrationBuilder.InsertData(
+                table: "ExchangeRate",
+                columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
+                values: new object[] { 12L, 3400m, "USD", "COP" });
+
+            migrationBuilder.InsertData(
+                table: "ExchangeRate",
+                columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
+                values: new object[] { 13L, 5.0m, "BRL", "ARS" });
+
+            migrationBuilder.InsertData(
+                table: "ExchangeRate",
+                columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
+                values: new object[] { 14L, 0.20m, "BRL", "EUR" });
+
+            migrationBuilder.InsertData(
+                table: "ExchangeRate",
+                columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
+                values: new object[] { 15L, 0.2m, "BRL", "USD" });
+
+            migrationBuilder.InsertData(
+                table: "ExchangeRate",
+                columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
+                values: new object[] { 16L, 10000m, "BRL", "COP" });
+
+            migrationBuilder.InsertData(
+                table: "ExchangeRate",
+                columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
+                values: new object[] { 17L, 4.0m, "COP", "ARS" });
+
+            migrationBuilder.InsertData(
+                table: "ExchangeRate",
+                columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
+                values: new object[] { 18L, 0.00025m, "COP", "EUR" });
+
+            migrationBuilder.InsertData(
+                table: "ExchangeRate",
+                columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
+                values: new object[] { 19L, 0.00029m, "COP", "USD" });
+
+            migrationBuilder.InsertData(
+                table: "ExchangeRate",
+                columns: new[] { "ExchangeRateId", "Rate", "SourceCurrencyCode", "TargetCurrencyCode" },
+                values: new object[] { 20L, 0.0001m, "COP", "BRL" });
 
             migrationBuilder.InsertData(
                 table: "User",
