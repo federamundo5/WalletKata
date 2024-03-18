@@ -72,6 +72,9 @@ namespace WalletKata.Services
                     currencyWallet.Amount += amount;
                     await _currencyWalletRepository.UpdateAsync(currencyWallet);
                 }
+
+                _unitOfWork.Commit();
+
             }
             catch (Exception ex)
             {
@@ -111,6 +114,7 @@ namespace WalletKata.Services
                 //resto el monto retirado y actualizo la DB.
                 currencyWallet.Amount -= amount;
                 await _currencyWalletRepository.UpdateAsync(currencyWallet);
+                _unitOfWork.Commit();
             }
             catch (Exception ex)
             {               
@@ -122,10 +126,7 @@ namespace WalletKata.Services
 
         public async Task<Dictionary<string, int>> GetBalance(long userId)
         {
-            _unitOfWork.BeginTransaction();
-
-            try
-            {
+        
                 //valido que el usuario exista y tenga una wallet.
                 await WalletValidator.ValidateUserAsync(_userRepository, userId);
                 var walletId = await WalletValidator.ValidateWalletAsync(_walletRepository, userId);
@@ -143,14 +144,7 @@ namespace WalletKata.Services
                     )
                     .ToDictionary(item => item.CurrencyCode, item => item.Amount);
 
-                return balanceDictionary;
-            }
-            catch (Exception ex)
-            {
-                //realizo rollback  en caso de error
-                _unitOfWork.Rollback();
-                throw;
-            }
+                return balanceDictionary;                
         }
 
         public async Task Exchange(int userId, string sourceCurrencyCode, string targetCurrencyCode, int amount)
@@ -204,6 +198,7 @@ namespace WalletKata.Services
                     targetCurrencyWallet.Amount += (int)targetAmount;
                     await _currencyWalletRepository.UpdateAsync(targetCurrencyWallet);
                 }
+                _unitOfWork.Commit();
             }
             catch (Exception ex)
             {
