@@ -9,14 +9,19 @@ namespace WalletKata.Services
     public class UserService : IUserService
     {
         private readonly IRepository<User> _userRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public UserService(IRepository<User> userRepository)
+        public UserService(IRepository<User> userRepository, IUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;
+             _unitOfWork = unitOfWork;
+                
         }
 
         public async Task<long> CreateUser(string username)
         {
+            _unitOfWork.BeginTransaction();
+
             // Validate input
             if (string.IsNullOrEmpty(username))
                 throw new ArgumentException("Username cannot be empty");

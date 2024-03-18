@@ -126,9 +126,11 @@ namespace WalletKata.Services
 
         public async Task<Dictionary<string, int>> GetBalance(long userId)
         {
-        
-                //valido que el usuario exista y tenga una wallet.
-                await WalletValidator.ValidateUserAsync(_userRepository, userId);
+
+            _unitOfWork.BeginTransaction();
+
+            //valido que el usuario exista y tenga una wallet.
+            await WalletValidator.ValidateUserAsync(_userRepository, userId);
                 var walletId = await WalletValidator.ValidateWalletAsync(_walletRepository, userId);
 
                 //obtengo todas las currency de la wallet para realizar la suma
@@ -180,7 +182,7 @@ namespace WalletKata.Services
                 sourceCurrencyWallet.Amount -= amount;
                 await _currencyWalletRepository.UpdateAsync(sourceCurrencyWallet);
 
-                //consulto si el usuario tiene la moneda destino en su wallet, si no la tiene genero el registro. si la tiene sumo el monto al monto existente.
+                //consulto si el usuario tiene la moneda destino en su wallet, si no la tiene genero el registro. 
                 var targetCurrencyWallet = (await _currencyWalletRepository.GetByCustomFilterAsync(cw => cw.WalletId == walletId && cw.CurrencyId == targetCurrencyId)).FirstOrDefault();
 
                 if (targetCurrencyWallet == null)
@@ -195,9 +197,12 @@ namespace WalletKata.Services
                 }
                 else
                 {
+                    //Si el usuario contiene la moneda en su wallet, le sumo el amount correspondiente
                     targetCurrencyWallet.Amount += (int)targetAmount;
                     await _currencyWalletRepository.UpdateAsync(targetCurrencyWallet);
                 }
+
+
                 _unitOfWork.Commit();
             }
             catch (Exception ex)
