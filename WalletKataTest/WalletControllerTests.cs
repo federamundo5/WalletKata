@@ -15,7 +15,7 @@ namespace WalletKataTest
         {
             // Arrange
             var walletServiceMock = new Mock<IWalletService>();
-            walletServiceMock.Setup(service => service.Deposit(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int>())).Verifiable();
+            walletServiceMock.Setup(service => service.Deposit(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<decimal>())).Verifiable();
 
             var controller = new WalletController(walletServiceMock.Object);
             var request = new DepositRequest { UserId = 1, CurrencyCode = "USD", Amount = 100 };
@@ -33,7 +33,7 @@ namespace WalletKataTest
         {
             // Arrange
             var walletServiceMock = new Mock<IWalletService>();
-            walletServiceMock.Setup(service => service.Exchange(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).Throws(new ArgumentException("Invalid currency code."));
+            walletServiceMock.Setup(service => service.Exchange(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>())).Throws(new ArgumentException("Invalid currency code."));
 
             var controller = new WalletController(walletServiceMock.Object);
             var request = new ExchangeRequest { UserId = 1, SourceCurrencyCode = "RTERUSD", TargetCurrencyCode = "SDFSAEUR", Amount = 100 };

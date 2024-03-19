@@ -47,7 +47,6 @@ namespace WalletKata.Services
             }
             catch (Exception ex)
             {
-                // Handle exception or log it
                 throw new Exception("Error occurred while retrieving users.", ex);
             }
         }
